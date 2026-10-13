@@ -1,0 +1,16 @@
+# Maven build output
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE & OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+hs_err_pid*

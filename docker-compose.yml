@@ -1,0 +1,15 @@
+# =============================================================================
+# SystemGuard — Lightweight Docker Compose (Development)
+# =============================================================================
+# ALL services run on free cloud tiers — zero Docker containers needed:
+#
+#   - PostgreSQL  → Supabase    (configure in .env)
+#   - Redis       → Upstash     (configure in .env)
+#   - Kafka       → Upstash     (configure in .env)
+#   - S3 Storage  → Cloudflare R2 (configure in .env)
+#
+# To run the backend, just set up your .env file and run:
+#   mvn spring-boot:run -pl systemguard-app
+# =============================================================================
+
+# No Docker services required. All infrastructure runs in the cloud.

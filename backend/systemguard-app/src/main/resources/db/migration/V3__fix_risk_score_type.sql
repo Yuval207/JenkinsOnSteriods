@@ -1,0 +1,1 @@
+ALTER TABLE findings ALTER COLUMN contextual_risk_score TYPE DOUBLE PRECISION;

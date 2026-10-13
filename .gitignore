@@ -1,0 +1,106 @@
+# =============================================================================
+# Root .gitignore — SystemGuard (jenkinsOnSteriods)
+# =============================================================================
+
+# --- Environment Variables & Secrets ---
+.env
+.env.*
+!.env.example
+!environment.example
+*.env
+*.pem
+*.key
+*.pfx
+*.p12
+
+# --- Java & Maven ---
+**/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.rar
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+
+# --- Node.js & Frontend (Next.js) ---
+**/node_modules/
+node_modules/
+**/.next/
+.next/
+out/
+build/
+dist/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Package manager debug logs & files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+.pnp/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Test Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# --- IDE & Editor Files ---
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Eclipse / NetBeans
+.project
+.classpath
+.settings/
+.factorypath
+.metadata/
+bin/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# --- Operating System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# --- Logs & Temporary Files ---
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+/tmp/
+tmp/
+temp/

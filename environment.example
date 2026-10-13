@@ -1,0 +1,47 @@
+# =============================================================================
+# SystemGuard — Environment Configuration
+# =============================================================================
+# Copy this file to .env and fill in your cloud service credentials.
+# All services use FREE cloud tiers — no Docker containers needed!
+# =============================================================================
+
+# --- PostgreSQL (Supabase Free Tier) ---
+# Sign up at https://supabase.com → New Project → Settings → Database
+POSTGRES_HOST=db.<YOUR_SUPABASE_PROJECT_REF>.supabase.co
+POSTGRES_PORT=5432
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=<YOUR_SUPABASE_DB_PASSWORD>
+
+# --- Upstash Redis (Serverless Free Tier) ---
+# Sign up at https://console.upstash.com → Create Database
+# Uncomment and set when you create your Upstash Redis database:
+# UPSTASH_REDIS_HOST=your-redis-name.upstash.io
+# UPSTASH_REDIS_PORT=6379
+# UPSTASH_REDIS_PASSWORD=your_upstash_redis_password
+# UPSTASH_REDIS_SSL=true
+
+# --- Upstash Kafka (Serverless Free Tier) ---
+# Sign up at https://console.upstash.com → Create Kafka Cluster
+# Uncomment and set when you create your Upstash Kafka cluster:
+# UPSTASH_KAFKA_BOOTSTRAP=your-kafka-name.upstash.io:9092
+# UPSTASH_KAFKA_USERNAME=your_upstash_kafka_username
+# UPSTASH_KAFKA_PASSWORD=your_upstash_kafka_password
+
+# --- Cloudflare R2 (S3-Compatible Object Storage) ---
+# Sign up at https://dash.cloudflare.com → R2 → Create Bucket
+# Uncomment and set when you create your R2 bucket:
+# R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+# R2_ACCESS_KEY=your_r2_access_key_id
+# R2_SECRET_KEY=your_r2_secret_access_key
+# R2_BUCKET=systemguard-artifacts
+
+# --- Repository Storage ---
+REPO_STORAGE_PATH=/tmp/systemguard/repos
+
+# --- Server ---
+SERVER_PORT=8080
+
+# --- JVM Optimizations (for slow machines) ---
+# Set these when running with: JAVA_OPTS="..." mvn spring-boot:run
+# JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseZGC -XX:+ZGenerational

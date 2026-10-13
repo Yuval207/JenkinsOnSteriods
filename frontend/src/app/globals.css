@@ -1,0 +1,594 @@
+@import "tailwindcss";
+
+/* ============================================================
+   SYSTEMGUARD — PREMIUM DESIGN SYSTEM
+   Inspired by Linear, Vercel, Datadog, Sentry
+   ============================================================ */
+
+@theme {
+  /* Surface hierarchy (layered depth system) */
+  --color-surface-0: #09090b;
+  --color-surface-1: #0c0c0f;
+  --color-surface-2: #111114;
+  --color-surface-3: #18181b;
+  --color-surface-4: #1f1f23;
+  --color-surface-5: #27272a;
+
+  /* Core palette */
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-primary: #6366f1;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #111114;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #27272a;
+  --color-muted-foreground: #71717a;
+  --color-accent: #818cf8;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #27272a;
+  --color-input: #18181b;
+  --color-ring: #6366f1;
+
+  /* Semantic severity palette */
+  --color-severity-critical: #ef4444;
+  --color-severity-high: #f97316;
+  --color-severity-medium: #eab308;
+  --color-severity-low: #3b82f6;
+  --color-severity-info: #6366f1;
+
+  /* Status palette */
+  --color-status-success: #22c55e;
+  --color-status-warning: #f59e0b;
+  --color-status-error: #ef4444;
+  --color-status-running: #6366f1;
+  --color-status-queued: #71717a;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+.text-display {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-heading-1 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.text-heading-2 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.text-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.text-mono {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+/* ============================================================
+   SURFACE SYSTEM (Cards, panels)
+   ============================================================ */
+.sg-card {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.sg-card:hover {
+  border-color: #3f3f46;
+}
+
+.sg-card-interactive {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.sg-card-interactive:hover {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 4px 24px -4px rgba(99, 102, 241, 0.1);
+}
+
+/* Glass panel — use sparingly for elevated surfaces */
+.glass-panel {
+  background: rgba(17, 17, 20, 0.8);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+}
+
+/* ============================================================
+   GLOW EFFECTS
+   ============================================================ */
+.glow-indigo {
+  box-shadow: 0 0 20px -4px rgba(99, 102, 241, 0.25), 0 0 60px -8px rgba(99, 102, 241, 0.1);
+}
+
+.glow-critical {
+  box-shadow: 0 0 20px -4px rgba(239, 68, 68, 0.25);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px -4px rgba(34, 197, 94, 0.25);
+}
+
+/* Ambient glow for background decoration */
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* ============================================================
+   SEVERITY BADGES
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-critical {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.badge-high {
+  background: rgba(249, 115, 22, 0.12);
+  color: #fdba74;
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.badge-medium {
+  background: rgba(234, 179, 8, 0.12);
+  color: #fde047;
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
+.badge-low {
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.badge-info {
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.badge-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.badge-neutral {
+  background: rgba(113, 113, 122, 0.12);
+  color: #a1a1aa;
+  border-color: rgba(113, 113, 122, 0.2);
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  opacity: 0;
+  animation: fade-in-up 0.35s ease-out forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* ============================================================
+   SKELETON LOADER
+   ============================================================ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-3);
+  border-radius: 0.5rem;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* ============================================================
+   TABLE SYSTEM
+   ============================================================ */
+.sg-table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.8125rem;
+}
+
+.sg-table thead {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sg-table th {
+  padding: 0.75rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.sg-table td {
+  padding: 0.875rem 1rem;
+  white-space: nowrap;
+}
+
+.sg-table tbody tr {
+  border-bottom: 1px solid rgba(39, 39, 42, 0.5);
+  transition: background-color 150ms ease;
+}
+
+.sg-table tbody tr:hover {
+  background-color: rgba(99, 102, 241, 0.03);
+}
+
+.sg-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: #6366f1;
+  border: 1px solid #6366f1;
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  box-shadow: 0 0 16px -2px rgba(99, 102, 241, 0.4);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #a1a1aa;
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  color: #fafafa;
+  background: var(--color-surface-4);
+  border-color: #3f3f46;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #a1a1aa;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-ghost:hover {
+  color: #fafafa;
+  background: var(--color-surface-3);
+}
+
+/* ============================================================
+   METRIC DISPLAY (for stat cards)
+   ============================================================ */
+.metric-value {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+/* ============================================================
+   CODE BLOCK
+   ============================================================ */
+.code-block {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.code-block-body {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: #e4e4e7;
+}
+
+/* ============================================================
+   PROGRESS BARS
+   ============================================================ */
+.progress-bar {
+  height: 0.375rem;
+  width: 100%;
+  background: var(--color-surface-4);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   FOCUS STYLES
+   ============================================================ */
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px rgba(99, 102, 241, 0.5);
+}
+
+/* ============================================================
+   INPUT FIELDS
+   ============================================================ */
+.sg-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #fafafa;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  transition: border-color 150ms ease;
+}
+
+.sg-input:hover {
+  border-color: #3f3f46;
+}
+
+.sg-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.sg-input::placeholder {
+  color: #52525b;
+}
+
+/* ============================================================
+   SELECT
+   ============================================================ */
+.sg-select {
+  appearance: none;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #fafafa;
+  background: var(--color-surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.sg-select:hover {
+  border-color: #3f3f46;
+}
+
+/* ============================================================
+   DOT INDICATOR
+   ============================================================ */
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-critical { background: #ef4444; }
+.dot-high { background: #f97316; }
+.dot-medium { background: #eab308; }
+.dot-low { background: #3b82f6; }
+.dot-success { background: #22c55e; }
+.dot-running { background: #6366f1; }
+.dot-error { background: #ef4444; }
+.dot-queued { background: #71717a; }
+
+/* Pulsing live dot */
+.dot-live {
+  position: relative;
+}
+
+.dot-live::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: inherit;
+  animation: pulse-ring 1.5s ease-out infinite;
+}

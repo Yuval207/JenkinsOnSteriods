@@ -1,0 +1,99 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      min-spare: 2
+      max: 10
+    connection-timeout: 5000
+
+spring:
+  application:
+    name: systemguard
+
+  # Exclude unused / unnecessary auto-configurations
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+  # --- PostgreSQL (Supabase) ---
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:aws-0-ap-southeast-1.pooler.supabase.com}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}?sslmode=require&prepareThreshold=0
+    username: ${POSTGRES_USER:postgres.lrfosirsnujasknyehuv}
+    password: ${POSTGRES_PASSWORD:loRFeLiJZ0ZpCgEX}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 120000
+      max-lifetime: 300000
+      connection-timeout: 10000
+      keepalive-time: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        query:
+          plan_cache_max_size: 64
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # --- Upstash Redis (Serverless, TLS) ---
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: ${UPSTASH_REDIS_HOST:allowing-mullet-192835.upstash.io}
+      port: ${UPSTASH_REDIS_PORT:6379}
+      password: ${UPSTASH_REDIS_PASSWORD:gQAAAAAAAvFDAAIgcDFjZmYzNjIyYzU2ZDk0NDNlYmVjOTdhOWUzOTgzMDc0ZA}
+      ssl:
+        enabled: ${UPSTASH_REDIS_SSL:true}
+      timeout: 5000
+
+# --- Supabase S3 Storage ---
+systemguard:
+  storage:
+    repos-path: ${REPO_STORAGE_PATH:/tmp/systemguard/repos}
+  s3:
+    endpoint: ${S3_ENDPOINT:https://lrfosirsnujasknyehuv.storage.supabase.co/storage/v1/s3}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
+    region: ${S3_REGION:ap-southeast-1}
+    bucket: ${S3_BUCKET:systemguard-artifacts}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.systemguard: DEBUG
+    org.springframework.kafka: OFF
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+    com.zaxxer.hikari: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
