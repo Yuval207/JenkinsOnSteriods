@@ -4,7 +4,9 @@ server:
     threads:
       min-spare: 2
       max: 10
-    connection-timeout: 5000
+    connection-timeout: 300s
+    keep-alive-timeout: 300s
+    max-swallow-size: 500MB
 
 spring:
   application:
@@ -15,6 +17,14 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+  # Multipart Upload Configuration (Support up to 500MB ZIP files)
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+      file-size-threshold: 2MB
 
   # --- PostgreSQL (Supabase) ---
   datasource:

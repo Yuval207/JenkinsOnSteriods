@@ -16,6 +16,8 @@ public final class ProjectMapper {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setRepositoryUrl(entity.getRepositoryUrl());
+        dto.setSourceType(entity.getSourceType());
+        dto.setOriginalFileName(entity.getOriginalFileName());
         dto.setDefaultBranch(entity.getDefaultBranch());
         dto.setDescription(entity.getDescription());
         dto.setStatus(entity.getStatus());

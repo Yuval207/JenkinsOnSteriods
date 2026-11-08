@@ -1,5 +1,6 @@
 package com.systemguard.project.dto;
 
+import com.systemguard.common.enums.SourceType;
 import com.systemguard.common.model.enums.ProjectStatus;
 import java.time.Instant;
 import java.util.List;
@@ -10,6 +11,8 @@ public class ProjectResponse {
     private UUID id;
     private String name;
     private String repositoryUrl;
+    private SourceType sourceType;
+    private String originalFileName;
     private String defaultBranch;
     private String description;
     private ProjectStatus status;
@@ -27,6 +30,10 @@ public class ProjectResponse {
     public void setName(String name) { this.name = name; }
     public String getRepositoryUrl() { return repositoryUrl; }
     public void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl; }
+    public SourceType getSourceType() { return sourceType; }
+    public void setSourceType(SourceType sourceType) { this.sourceType = sourceType; }
+    public String getOriginalFileName() { return originalFileName; }
+    public void setOriginalFileName(String originalFileName) { this.originalFileName = originalFileName; }
     public String getDefaultBranch() { return defaultBranch; }
     public void setDefaultBranch(String defaultBranch) { this.defaultBranch = defaultBranch; }
     public String getDescription() { return description; }

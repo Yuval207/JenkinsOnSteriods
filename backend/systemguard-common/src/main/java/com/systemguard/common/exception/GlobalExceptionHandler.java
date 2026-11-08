@@ -48,6 +48,24 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(org.springframework.web.multipart.MaxUploadSizeExceededException ex, WebRequest request) {
+        log.warn("Upload size exceeded: {}", ex.getMessage());
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size exceeds the 500MB maximum upload limit", request);
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public ResponseEntity<Map<String, Object>> handleMultipartException(org.springframework.web.multipart.MultipartException ex, WebRequest request) {
+        log.warn("Multipart upload error: {}", ex.getMessage());
+        String msg = "Failed to upload file";
+        if (ex.getCause() != null && ex.getCause().getMessage() != null && ex.getCause().getMessage().contains("SocketTimeoutException")) {
+            msg = "File upload timed out. Connection closed by server.";
+        } else if (ex.getMessage() != null) {
+            msg = ex.getMessage();
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, msg, request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex, WebRequest request) {
         log.error("Unexpected error", ex);

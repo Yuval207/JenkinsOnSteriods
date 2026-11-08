@@ -9,12 +9,13 @@ import {
   ChevronRight, 
   Loader2, 
   Check, 
-  XCircle, 
   ShieldCheck, 
-  AlertTriangle,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Download,
+  X
 } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -42,6 +43,8 @@ export default function FindingsPage() {
   const [aiFixingId, setAiFixingId] = useState<string | null>(null);
   const [isBulkFixing, setIsBulkFixing] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [showFixBanner, setShowFixBanner] = useState<boolean>(false);
+  const [lastFixedCount, setLastFixedCount] = useState<number>(0);
 
   const queryClient = useQueryClient();
 
@@ -80,7 +83,7 @@ export default function FindingsPage() {
       });
       return res.data;
     },
-    onMutate: async ({ findingId, status }) => {
+    onMutate: async ({ findingId }) => {
       setResolvingId(findingId);
     },
     onSuccess: (data, variables) => {
@@ -108,6 +111,8 @@ export default function FindingsPage() {
       setAiFixingId(null);
       if (data.applied) {
         setSuccessToast(`✨ AI fix applied to code & finding resolved!`);
+        setShowFixBanner(true);
+        setLastFixedCount(1);
       } else {
         alert(data.errorMessage || 'Could not apply auto-fix');
       }
@@ -136,6 +141,8 @@ export default function FindingsPage() {
     onMutate: () => setIsBulkFixing(true),
     onSuccess: (total) => {
       setIsBulkFixing(false);
+      setLastFixedCount(total);
+      setShowFixBanner(true);
       setSuccessToast(`✨ AI automatically remediated ${total} vulnerabilities across repositories!`);
       setTimeout(() => setSuccessToast(null), 5000);
       queryClient.invalidateQueries({ queryKey: ['all_findings'] });
@@ -179,6 +186,50 @@ export default function FindingsPage() {
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-bottom-5">
           <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="text-sm font-medium">{successToast}</span>
+        </div>
+      )}
+
+      {/* Prominent Fix Banner with Download CTA */}
+      {showFixBanner && (
+        <div className="p-4 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-emerald-300">
+                Fixes applied! {lastFixedCount > 0 ? `Remediated ${lastFixedCount} vulnerabilities.` : 'All issues patched.'}
+              </div>
+              <div className="text-xs text-zinc-300 mt-0.5">
+                Security patches have been written directly to your project files on disk. Download your updated project as a ZIP archive.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            {projectsData && projectsData.length === 1 ? (
+              <a
+                href={`/api/v1/projects/${projectsData[0].id}/download`}
+                download
+                className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download your updated project →
+              </a>
+            ) : (
+              <Link
+                href="/projects"
+                className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
+              >
+                Download your updated project →
+              </Link>
+            )}
+            <button
+              onClick={() => setShowFixBanner(false)}
+              className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

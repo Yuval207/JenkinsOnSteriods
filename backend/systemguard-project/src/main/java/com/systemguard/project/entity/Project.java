@@ -1,5 +1,6 @@
 package com.systemguard.project.entity;
 
+import com.systemguard.common.enums.SourceType;
 import com.systemguard.common.model.BaseEntity;
 import com.systemguard.common.model.enums.ProjectStatus;
 import jakarta.persistence.*;
@@ -13,8 +14,15 @@ public class Project extends BaseEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "repository_url", nullable = false)
+    @Column(name = "repository_url")
     private String repositoryUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_type", nullable = false)
+    private SourceType sourceType = SourceType.GIT;
+
+    @Column(name = "original_file_name")
+    private String originalFileName;
 
     @Column(name = "default_branch", nullable = false)
     private String defaultBranch = "main";
@@ -52,6 +60,12 @@ public class Project extends BaseEntity {
 
     public String getRepositoryUrl() { return repositoryUrl; }
     public void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl; }
+
+    public SourceType getSourceType() { return sourceType; }
+    public void setSourceType(SourceType sourceType) { this.sourceType = sourceType; }
+
+    public String getOriginalFileName() { return originalFileName; }
+    public void setOriginalFileName(String originalFileName) { this.originalFileName = originalFileName; }
 
     public String getDefaultBranch() { return defaultBranch; }
     public void setDefaultBranch(String defaultBranch) { this.defaultBranch = defaultBranch; }

@@ -8,9 +8,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +33,31 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest request) {
         ProjectResponse response = projectService.createProject(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProjectResponse> uploadProject(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "description", required = false) String description) {
+        ProjectResponse response = projectService.createProjectFromZip(name, description, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping(value = "/{projectId}/download", produces = "application/zip")
+    public ResponseEntity<StreamingResponseBody> downloadProject(@PathVariable UUID projectId) {
+        var project = projectService.getProjectEntity(projectId);
+        String safeName = (project.getName() != null && !project.getName().isBlank())
+                ? project.getName().replaceAll("[^a-zA-Z0-9._-]", "_")
+                : "project";
+        String filename = safeName + ".zip";
+
+        StreamingResponseBody stream = projectService.downloadProjectAsZip(projectId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .body(stream);
     }
 
     @GetMapping

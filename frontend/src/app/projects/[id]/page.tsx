@@ -1,7 +1,22 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Play, Activity, ShieldAlert, GitBranch, Terminal, ExternalLink, Settings2, Code2, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  Play, 
+  ShieldAlert, 
+  GitBranch, 
+  Terminal, 
+  ExternalLink, 
+  Settings2, 
+  Code2, 
+  Loader2, 
+  RefreshCw, 
+  AlertTriangle,
+  Download,
+  FolderArchive,
+  Archive
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,7 +25,9 @@ import axios from 'axios';
 type Project = {
   id: string;
   name: string;
-  repositoryUrl: string;
+  repositoryUrl?: string;
+  sourceType?: 'GIT' | 'ZIP_UPLOAD';
+  originalFileName?: string;
   defaultBranch: string;
   status: string;
   errorMessage?: string;
@@ -98,6 +115,7 @@ export default function ProjectDetailsPage() {
 
   const scans = scansData || [];
   const latestScan = scans.length > 0 ? scans[0] : null;
+  const isZip = project.sourceType === 'ZIP_UPLOAD';
 
   return (
     <div className="space-y-6 pb-12">
@@ -107,8 +125,8 @@ export default function ProjectDetailsPage() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
             <div>
-              <div className="font-medium text-white">Repository Sync Error</div>
-              <div className="text-xs text-red-400/80 mt-0.5">{project.errorMessage || 'Authentication or network error while accessing repository.'}</div>
+              <div className="font-medium text-white">Project Initialization Error</div>
+              <div className="text-xs text-red-400/80 mt-0.5">{project.errorMessage || 'Error occurred while processing project source files.'}</div>
             </div>
           </div>
           <button
@@ -117,7 +135,7 @@ export default function ProjectDetailsPage() {
             className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 hover:bg-red-500/20 cursor-pointer"
           >
             {syncMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            Retry Sync
+            Retry
           </button>
         </div>
       )}
@@ -131,33 +149,57 @@ export default function ProjectDetailsPage() {
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-display text-white">{project.name}</h1>
+            <span className={`badge ${isZip ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'}`}>
+              {isZip ? 'ZIP Upload' : 'Git Repository'}
+            </span>
             <span className={`badge ${project.status === 'ACTIVE' ? 'badge-success' : 'bg-zinc-800 text-zinc-400'}`}>
               {project.status}
             </span>
           </div>
-          <a href={project.repositoryUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-zinc-400 mt-2 text-sm hover:text-indigo-400 transition-colors">
-            {project.repositoryUrl} <ExternalLink className="w-3 h-3" />
-          </a>
+          
+          {isZip ? (
+            <div className="flex items-center gap-2 text-zinc-400 mt-2 text-sm">
+              <FolderArchive className="w-4 h-4 text-purple-400" />
+              <span className="font-mono text-xs text-zinc-300">{project.originalFileName || 'Uploaded ZIP Package'}</span>
+            </div>
+          ) : (
+            <a href={project.repositoryUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-zinc-400 mt-2 text-sm hover:text-indigo-400 transition-colors">
+              {project.repositoryUrl} <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Download Project Button */}
+          <a
+            href={`/api/v1/projects/${id}/download`}
+            download
+            className="btn-secondary flex items-center gap-2 cursor-pointer hover:border-indigo-500/50 hover:text-white"
+            title="Download project directory as a ZIP file"
+          >
+            <Download className="w-4 h-4 text-indigo-400" />
+            Download Project
+          </a>
+
           <button
             className="btn-secondary flex items-center gap-2 cursor-pointer"
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending}
-            title="Sync repository with remote"
+            title={isZip ? 'Refresh metadata from local project files' : 'Sync repository with remote'}
           >
             {syncMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
             ) : (
               <RefreshCw className="w-4 h-4 text-zinc-400" />
             )}
-            Sync
+            {isZip ? 'Refresh' : 'Sync'}
           </button>
+          
           <Link href={`/projects/${id}/settings`} className="btn-secondary">
             <Settings2 className="w-4 h-4" />
             Configure
           </Link>
+
           <button 
             className="btn-primary" 
             onClick={() => triggerScanMutation.mutate()}
@@ -192,10 +234,23 @@ export default function ProjectDetailsPage() {
         </div>
         
         <div className="sg-card p-4">
-          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Target Branch</div>
+          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+            {isZip ? 'Archive Name' : 'Target Branch'}
+          </div>
           <div className="flex items-center gap-2">
-            <GitBranch className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-medium text-zinc-200">{project.defaultBranch}</span>
+            {isZip ? (
+              <>
+                <Archive className="w-4 h-4 text-purple-400 shrink-0" />
+                <span className="text-sm font-medium text-zinc-200 truncate" title={project.originalFileName || 'ZIP Archive'}>
+                  {project.originalFileName || 'ZIP Archive'}
+                </span>
+              </>
+            ) : (
+              <>
+                <GitBranch className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-sm font-medium text-zinc-200">{project.defaultBranch}</span>
+              </>
+            )}
           </div>
         </div>
         

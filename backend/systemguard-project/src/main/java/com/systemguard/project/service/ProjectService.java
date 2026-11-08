@@ -1,17 +1,20 @@
 package com.systemguard.project.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.systemguard.common.enums.SourceType;
 import com.systemguard.common.exception.ResourceNotFoundException;
 import com.systemguard.common.exception.SystemGuardException;
 import com.systemguard.common.model.enums.ProjectStatus;
 import com.systemguard.project.dto.CreateProjectRequest;
 import com.systemguard.project.dto.ProjectResponse;
+import com.systemguard.project.dto.UploadProjectResponse;
 import com.systemguard.project.entity.Project;
 import com.systemguard.project.mapper.ProjectMapper;
 import com.systemguard.project.repository.ProjectRepository;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -23,28 +26,39 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Service for project and repository management.
- * Handles project creation, Git cloning, and build tool detection.
+ * Handles project creation, Git cloning, ZIP extraction/download, and build tool detection.
  */
 @Service
 public class ProjectService {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
+    private static final long MAX_ZIP_SIZE = 500L * 1024 * 1024; // 500MB
 
     private final ProjectRepository projectRepository;
     private final String repoStoragePath;
+    private final ObjectMapper objectMapper;
 
     public ProjectService(ProjectRepository projectRepository,
-                          @Value("${systemguard.storage.repos-path:/data/repos}") String repoStoragePath) {
+                          @Value("${systemguard.storage.repos-path:/data/repos}") String repoStoragePath,
+                          ObjectMapper objectMapper) {
         this.projectRepository = projectRepository;
         this.repoStoragePath = repoStoragePath;
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
     }
 
     @Transactional
@@ -57,6 +71,7 @@ public class ProjectService {
         Project project = new Project();
         project.setName(request.getName());
         project.setRepositoryUrl(request.getRepositoryUrl());
+        project.setSourceType(SourceType.GIT);
         project.setDefaultBranch(request.getDefaultBranch() != null ? request.getDefaultBranch() : "main");
         project.setDescription(request.getDescription());
         if (request.getTags() != null) {
@@ -71,6 +86,225 @@ public class ProjectService {
         cloneRepositoryAsync(project.getId());
 
         return ProjectMapper.toResponse(project);
+    }
+
+    /**
+     * Creates a project from an uploaded ZIP archive.
+     */
+    @Transactional
+    public ProjectResponse createProjectFromZip(String name, String description, MultipartFile zipFile) {
+        if (zipFile == null || zipFile.isEmpty()) {
+            throw new SystemGuardException("INVALID_FILE", "ZIP file is required and cannot be empty");
+        }
+
+        if (zipFile.getSize() > MAX_ZIP_SIZE) {
+            throw new SystemGuardException("FILE_TOO_LARGE", "ZIP file size exceeds the 500MB limit");
+        }
+
+        String originalFilename = zipFile.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
+            originalFilename = "project.zip";
+        }
+
+        // Determine fallback name from filename if name is not explicitly provided
+        String derivedName = name;
+        if (derivedName == null || derivedName.isBlank()) {
+            String base = originalFilename.replaceAll("(?i)\\.zip$", "");
+            derivedName = base.isBlank() ? "Uploaded Project" : base;
+        }
+
+        Project project = new Project();
+        project.setName(derivedName.trim());
+        project.setDescription(description != null && !description.isBlank() ? description.trim() : null);
+        project.setSourceType(SourceType.ZIP_UPLOAD);
+        project.setOriginalFileName(originalFilename);
+        project.setDefaultBranch("main");
+        project.setStatus(ProjectStatus.SYNCING);
+
+        project = projectRepository.save(project);
+        log.info("Initialized ZIP project entity: {} ({})", project.getName(), project.getId());
+
+        Path projectDir = Path.of(repoStoragePath, project.getId().toString());
+
+        try {
+            Files.createDirectories(projectDir);
+
+            // Extract ZIP entries safely
+            try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    Path targetPath = projectDir.resolve(entry.getName()).normalize();
+                    // Zip Slip security prevention check
+                    if (!targetPath.startsWith(projectDir)) {
+                        throw new SystemGuardException("ZIP_SLIP_ATTACK", "Invalid entry in zip: " + entry.getName());
+                    }
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(targetPath);
+                    } else {
+                        if (targetPath.getParent() != null) {
+                            Files.createDirectories(targetPath.getParent());
+                        }
+                        Files.copy(zis, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    zis.closeEntry();
+                }
+            }
+
+            // Handle nested root folder (if ZIP has single root dir, flatten it)
+            flattenNestedRootDirectory(projectDir);
+
+            // If name or description was not explicitly provided, attempt auto-detection from package.json or pom.xml
+            boolean userProvidedName = name != null && !name.isBlank();
+            boolean userProvidedDesc = description != null && !description.isBlank();
+            enrichMetadataFromFiles(project, projectDir, userProvidedName, userProvidedDesc);
+
+            // Detect languages and build tools
+            detectProjectMetadata(project, projectDir);
+
+            project.setLocalPath(projectDir.toString());
+            project.setLastCommitHash("zip-upload");
+            project.setStatus(ProjectStatus.ACTIVE);
+            project = projectRepository.save(project);
+
+            log.info("Successfully extracted and activated ZIP project: {} ({}) at {}", project.getName(), project.getId(), projectDir);
+            return UploadProjectResponse.fromProject(project);
+
+        } catch (Exception e) {
+            log.error("Failed to process ZIP upload for project: {}", project.getName(), e);
+            project.setStatus(ProjectStatus.ERROR);
+            project.setErrorMessage("ZIP processing failed: " + e.getMessage());
+            projectRepository.save(project);
+            throw new SystemGuardException("ZIP_PROCESSING_FAILED", "Failed to extract and process ZIP file: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Streams the project files as a ZIP archive, excluding build artifacts and VCS data.
+     */
+    @Transactional(readOnly = true)
+    public StreamingResponseBody downloadProjectAsZip(UUID projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        if (project.getLocalPath() == null || project.getLocalPath().isBlank()) {
+            throw new SystemGuardException("NO_LOCAL_PATH", "Project local path is not configured");
+        }
+
+        Path rootPath = Path.of(project.getLocalPath());
+        if (!Files.exists(rootPath) || !Files.isDirectory(rootPath)) {
+            throw new SystemGuardException("DIRECTORY_NOT_FOUND", "Project directory does not exist on disk: " + rootPath);
+        }
+
+        return outputStream -> {
+            try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
+                Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        String dirName = dir.getFileName() != null ? dir.getFileName().toString() : "";
+                        // Exclude .git/, node_modules/, target/, __MACOSX, and build folders
+                        if (dirName.equals(".git") || dirName.equals("node_modules") || dirName.equals("target") || dirName.equals("__MACOSX")) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        String fileName = file.getFileName().toString();
+                        // Exclude .class files and system metadata files
+                        if (fileName.endsWith(".class") || fileName.equals(".DS_Store")) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        Path rel = rootPath.relativize(file);
+                        ZipEntry entry = new ZipEntry(rel.toString().replace('\\', '/'));
+                        zos.putNextEntry(entry);
+                        Files.copy(file, zos);
+                        zos.closeEntry();
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+                zos.finish();
+            }
+        };
+    }
+
+    /**
+     * Flattens single nested root folder if the ZIP contents were wrapped in one top-level directory.
+     */
+    private void flattenNestedRootDirectory(Path projectDir) throws IOException {
+        List<Path> nonSystemEntries;
+        try (var stream = Files.list(projectDir)) {
+            nonSystemEntries = stream
+                    .filter(p -> {
+                        String n = p.getFileName().toString();
+                        return !n.equals("__MACOSX") && !n.equals(".DS_Store");
+                    })
+                    .toList();
+        }
+
+        if (nonSystemEntries.size() == 1 && Files.isDirectory(nonSystemEntries.get(0))) {
+            Path singleDir = nonSystemEntries.get(0);
+            log.info("Detected single nested root folder '{}', flattening to project root", singleDir.getFileName());
+            Path tempDir = Files.createTempDirectory("systemguard-flatten-");
+            try {
+                // Move children of singleDir to tempDir
+                try (var subStream = Files.list(singleDir)) {
+                    for (Path child : subStream.toList()) {
+                        Files.move(child, tempDir.resolve(child.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+                // Delete singleDir
+                deleteDirectory(singleDir);
+
+                // Move items from tempDir to projectDir
+                try (var tempStream = Files.list(tempDir)) {
+                    for (Path child : tempStream.toList()) {
+                        Files.move(child, projectDir.resolve(child.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            } finally {
+                deleteDirectory(tempDir);
+            }
+        }
+    }
+
+    /**
+     * Reads package.json or pom.xml to enrich project name and description if not explicitly set.
+     */
+    private void enrichMetadataFromFiles(Project project, Path repoDir, boolean userProvidedName, boolean userProvidedDesc) {
+        Path packageJson = repoDir.resolve("package.json");
+        if (Files.exists(packageJson)) {
+            try {
+                JsonNode node = objectMapper.readTree(packageJson.toFile());
+                if (!userProvidedName && node.hasNonNull("name")) {
+                    String pkgName = node.get("name").asText().trim();
+                    if (!pkgName.isEmpty()) {
+                        project.setName(pkgName);
+                    }
+                }
+                if (!userProvidedDesc && node.hasNonNull("description")) {
+                    String pkgDesc = node.get("description").asText().trim();
+                    if (!pkgDesc.isEmpty()) {
+                        project.setDescription(pkgDesc);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not read package.json metadata: {}", e.getMessage());
+            }
+        }
+
+        Path pomXml = repoDir.resolve("pom.xml");
+        if (Files.exists(pomXml) && !userProvidedName && (project.getName().equals("Uploaded Project") || project.getName().startsWith("project"))) {
+            try {
+                String pomContent = Files.readString(pomXml);
+                Matcher m = Pattern.compile("<artifactId>([^<]+)</artifactId>").matcher(pomContent);
+                if (m.find()) {
+                    project.setName(m.group(1).trim());
+                }
+            } catch (Exception e) {
+                log.warn("Could not read pom.xml metadata: {}", e.getMessage());
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -96,7 +330,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
-        // Clean up local clone
+        // Clean up local files
         if (project.getLocalPath() != null) {
             try {
                 deleteDirectory(Path.of(project.getLocalPath()));
@@ -119,6 +353,20 @@ public class ProjectService {
     public ProjectResponse syncRepository(UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        if (project.getSourceType() == SourceType.ZIP_UPLOAD) {
+            log.info("Project {} is a ZIP upload; refreshing metadata on local files", project.getName());
+            if (project.getLocalPath() != null) {
+                Path localDir = Path.of(project.getLocalPath());
+                if (Files.isDirectory(localDir)) {
+                    detectProjectMetadata(project, localDir);
+                    project.setStatus(ProjectStatus.ACTIVE);
+                    project.setErrorMessage(null);
+                    project = projectRepository.save(project);
+                }
+            }
+            return ProjectMapper.toResponse(project);
+        }
 
         project.setStatus(ProjectStatus.SYNCING);
         project.setErrorMessage(null);
@@ -263,7 +511,7 @@ public class ProjectService {
         if (Files.exists(repoDir.resolve("docker-compose.yml")) || Files.exists(repoDir.resolve("docker-compose.yaml"))) {
             buildTools.add("Docker Compose");
         }
-        if (Files.exists(repoDir.resolve("requirements.txt")) || Files.exists(repoDir.resolve("setup.py"))) {
+        if (Files.exists(repoDir.resolve("requirements.txt")) || Files.exists(repoDir.resolve("setup.py")) || Files.exists(repoDir.resolve("pyproject.toml"))) {
             languages.add("Python");
             buildTools.add("pip");
         }
@@ -275,9 +523,35 @@ public class ProjectService {
             buildTools.add("Cargo");
         }
 
+        // C# / .NET (*.csproj or *.sln)
+        try (var stream = Files.walk(repoDir, 3)) {
+            if (stream.anyMatch(p -> p.toString().endsWith(".csproj") || p.toString().endsWith(".sln"))) {
+                languages.add("C#");
+                buildTools.add(".NET");
+            }
+        } catch (IOException ignored) {}
+
+        // Ruby (Gemfile)
+        if (Files.exists(repoDir.resolve("Gemfile"))) {
+            languages.add("Ruby");
+            buildTools.add("Bundler");
+        }
+
+        // PHP (composer.json)
+        if (Files.exists(repoDir.resolve("composer.json"))) {
+            languages.add("PHP");
+            buildTools.add("Composer");
+        }
+
+        // Dart / Flutter (pubspec.yaml)
+        if (Files.exists(repoDir.resolve("pubspec.yaml"))) {
+            languages.add("Dart");
+            buildTools.add("Flutter");
+        }
+
         // Check for Terraform/IaC
-        try {
-            if (Files.walk(repoDir, 3).anyMatch(p -> p.toString().endsWith(".tf"))) {
+        try (var stream = Files.walk(repoDir, 3)) {
+            if (stream.anyMatch(p -> p.toString().endsWith(".tf"))) {
                 buildTools.add("Terraform");
             }
         } catch (IOException ignored) {}
