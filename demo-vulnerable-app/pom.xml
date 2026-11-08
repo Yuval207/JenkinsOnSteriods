@@ -15,7 +15,7 @@
     <artifactId>vulnerable-demo-app</artifactId>
     <version>1.0.0</version>
     <name>Vulnerable Demo Application</name>
-    <description>Deliberately vulnerable Spring Boot app for SystemGuard testing</description>
+    <description>Deliberately vulnerable Spring Boot app for JenkinsOnSteroids testing</description>
 
     <properties>
         <java.version>17</java.version>

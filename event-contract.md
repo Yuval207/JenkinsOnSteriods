@@ -1,4 +1,4 @@
-# SystemGuard — Kafka Event Contracts
+# JenkinsOnSteroids — Kafka Event Contracts
 
 ## General Event Envelope
 

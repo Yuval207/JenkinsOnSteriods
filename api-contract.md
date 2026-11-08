@@ -1,4 +1,4 @@
-# SystemGuard — API Contract (Phase 1)
+# JenkinsOnSteroids — API Contract (Phase 1)
 
 ## Base URL
 ```
@@ -313,7 +313,7 @@ GET /api/v1/info
 **Response: 200 OK**
 ```json
 {
-  "name": "SystemGuard",
+  "name": "JenkinsOnSteroids",
   "version": "0.1.0",
   "phase": 1,
   "scanners": ["SEMGREP", "TRIVY", "GITLEAKS"]

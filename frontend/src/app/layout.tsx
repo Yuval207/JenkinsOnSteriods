@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SystemGuard — Software Assurance Platform",
+  title: "JenkinsOnSteroids — Software Assurance Platform",
   description: "Advanced developer-facing software assurance platform. Detect, understand, fix, and verify security vulnerabilities across your entire software supply chain.",
 };
 

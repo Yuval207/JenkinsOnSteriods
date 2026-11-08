@@ -8,7 +8,7 @@
 
 ## Context
 
-SystemGuard requires a backend that:
+JenkinsOnSteroids requires a backend that:
 1. Orchestrates multiple scanner integrations (Semgrep, Trivy, Gitleaks, Checkov)
 2. Manages complex domain workflows (scan → finding → remediation → verification)
 3. Maintains a unified data model across all modules
@@ -47,7 +47,7 @@ We considered three architectural options:
 
 ## Decision
 
-We will build the SystemGuard control plane as a **modular monolith**.
+We will build the JenkinsOnSteroids control plane as a **modular monolith**.
 
 ### Structure
 

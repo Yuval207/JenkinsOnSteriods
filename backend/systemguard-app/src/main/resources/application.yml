@@ -10,7 +10,7 @@ server:
 
 spring:
   application:
-    name: systemguard
+    name: jenkins-on-steroids
 
   # Exclude unused / unnecessary auto-configurations
   autoconfigure:

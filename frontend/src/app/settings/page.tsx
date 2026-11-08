@@ -262,7 +262,7 @@ export default function SettingsPage() {
           <div className="sg-card p-6 space-y-5">
             <div>
               <h2 className="text-base font-semibold text-white">Alert Preferences</h2>
-              <p className="text-xs text-zinc-400 mt-1">Configure when SystemGuard sends high-priority notifications.</p>
+              <p className="text-xs text-zinc-400 mt-1">Configure when JenkinsOnSteroids sends high-priority notifications.</p>
             </div>
 
             <div className="space-y-4">

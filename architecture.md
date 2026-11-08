@@ -1,8 +1,8 @@
-# SystemGuard — System Architecture
+# JenkinsOnSteroids — System Architecture
 
 ## Vision
 
-SystemGuard is a developer-facing Software Assurance Platform that analyzes software systems
+JenkinsOnSteroids is a developer-facing Software Assurance Platform that analyzes software systems
 at multiple layers (code, dependency, API, architecture, infrastructure, runtime), correlates
 findings, understands application architecture, determines blast radius, explains evidence,
 proposes remediation, generates patches, verifies fixes in isolation, and creates PRs only
@@ -224,8 +224,8 @@ postgres:     PostgreSQL 16
 redis:        Redis 7
 kafka:        Apache Kafka (KRaft single-node)
 minio:        MinIO (S3-compatible)
-backend:      SystemGuard Control Plane (Spring Boot)
-frontend:     SystemGuard Dashboard (Next.js dev server)
+backend:      JenkinsOnSteroids Control Plane (Spring Boot)
+frontend:     JenkinsOnSteroids Dashboard (Next.js dev server)
 ```
 
 For production: Kubernetes (Phase 3+), with Helm charts.

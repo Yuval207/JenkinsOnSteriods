@@ -53,7 +53,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               exit={{ opacity: 0 }}
               className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400"
             >
-              SystemGuard
+              JenkinsOnSteroids
             </motion.span>
           )}
         </Link>

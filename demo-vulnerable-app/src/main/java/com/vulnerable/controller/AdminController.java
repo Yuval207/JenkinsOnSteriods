@@ -29,7 +29,7 @@ public class AdminController {
     public Map<String, String> processTemplate(@RequestBody Map<String, String> request) {
         String template = request.get("template");
         StringSubstitutor sub = new StringSubstitutor(
-                Map.of("name", "SystemGuard", "version", "1.0")
+                Map.of("name", "JenkinsOnSteroids", "version", "1.0")
         );
         String result = sub.replace(template);
         return Map.of("result", result);

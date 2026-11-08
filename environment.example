@@ -1,5 +1,5 @@
 # =============================================================================
-# SystemGuard — Environment Configuration
+# JenkinsOnSteroids — Environment Configuration
 # =============================================================================
 # Copy this file to .env and fill in your cloud service credentials.
 # All services use FREE cloud tiers — no Docker containers needed!

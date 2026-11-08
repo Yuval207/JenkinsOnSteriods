@@ -1,4 +1,4 @@
-# SystemGuard — Phase Plan
+# JenkinsOnSteroids — Phase Plan
 
 ## Phase 1: Foundation + First Vertical Slice
 
